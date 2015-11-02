@@ -11,7 +11,7 @@ import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.strands.channels.Channel;
 import co.paralleluniverse.strands.channels.Channels;
 import com.pinterest.jbender.JBender;
-import com.pinterest.jbender.events.Event;
+import com.pinterest.jbender.events.TimingEvent;
 import com.pinterest.jbender.events.recording.HdrHistogramRecorder;
 import com.pinterest.jbender.events.recording.LoggingRecorder;
 import com.pinterest.jbender.executors.RequestExecutor;
@@ -38,7 +38,7 @@ public class LoadTest {
             }, 1000000)) {
 
       final Channel<HttpGet> requestCh = Channels.newChannel(1000);
-      final Channel<Event<CloseableHttpResponse>> eventCh = Channels.newChannel(1000);
+      final Channel<TimingEvent<CloseableHttpResponse>> eventCh = Channels.newChannel(1000);
 
       // Requests generator
       new Fiber<Void>("req-gen", () -> {
@@ -53,11 +53,11 @@ public class LoadTest {
       final Histogram histogram = new Histogram(3600000000L, 3);
 
       // Event recording, both HistHDR and logging
-      record("recorder", eventCh, new HdrHistogramRecorder(histogram), new LoggingRecorder(LOG));
+      record(eventCh, new HdrHistogramRecorder(histogram, 1000000), new LoggingRecorder(LOG));
 
       // Main
       new Fiber<Void>("jbender", () -> {
-        JBender.loadTestThroughput(intervalGenerator, requestCh, requestExecutor, eventCh);
+        JBender.loadTestThroughput(intervalGenerator, 0, requestCh, requestExecutor, eventCh);
       }).start().join();
 
       histogram.outputPercentileDistribution(System.out, 1000.0);

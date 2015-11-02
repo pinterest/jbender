@@ -1,0 +1,129 @@
+// Gradle Thrift plugin
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath "co.tomlee.gradle.plugins:gradle-thrift-plugin:0.0.4"
+    }
+}
+
+// Capsule plugin
+plugins {
+    id "us.kirchmeier.capsule" version "1.0-rc1"
+}
+
+apply plugin: 'java'
+apply plugin: 'thrift'
+
+// Target JDK8
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+group = 'jbendertut'
+version = '0.1-SNAPSHOT'
+
+// UTF8 encoding for sources
+[compileJava, compileTestJava]*.options*.encoding = "UTF-8"
+
+repositories {
+    // Enable this if you want to use locally-built artifacts
+    mavenLocal()
+
+    mavenCentral()
+}
+
+configurations {
+    quasar
+}
+
+dependencies {
+    // Thrift API
+    compile group: "org.apache.thrift", name: "libthrift", version: "0.9.1"
+
+    // Quasar-Thrift server
+    compile group: "com.pinterest", name: "quasar-thrift", version: "0.3"
+
+    // Quasar API
+    compile group: "co.paralleluniverse", name: "quasar-core", version: "0.7.3", classifier: "jdk8"
+
+    // JBender API
+    compile group: "com.pinterest", name: "jbender", version: "1.0"
+
+    // Logging
+    compile group: "org.slf4j", name: "slf4j-api", version: "1.7.12"
+    compile group: "org.slf4j", name: "slf4j-simple", version: "1.7.12"
+
+    // Useful to point to the Quasar agent later in JVM flags (and Capsule-building task)
+    quasar group: "co.paralleluniverse", name: "quasar-core", version: "0.7.3", classifier: "jdk8"
+}
+
+// Thrift generators
+generateThriftSource {
+    generators { java {} }
+}
+
+// Automatically find Quasar suspendables in Thrift-generated code
+classes {
+    doFirst {
+        ant.taskdef(name: 'scanSuspendables',
+                classname: 'co.paralleluniverse.fibers.instrument.SuspendablesScanner',
+                classpath: "build/classes/main:build/resources/main:${configurations.runtime.asPath}")
+        ant.scanSuspendables(
+                auto: true,
+                suspendablesFile: "$sourceSets.main.output.resourcesDir/META-INF/suspendables",
+                supersFile: "$sourceSets.main.output.resourcesDir/META-INF/suspendable-supers",
+                append: true) {
+            fileset(dir: sourceSets.main.output.classesDir)
+        }
+    }
+}
+
+// Task building an handy self-contained server capsule
+task serverCapsule(type: FatCapsule) {
+    applicationClass "com.pinterest.echo.jbender.server.Main"
+
+    capsuleManifest {
+        javaAgents = [configurations.quasar.iterator().next().getName()]
+        // Aggressive optimizations
+        jvmArgs = ["-server", "-XX:+TieredCompilation", "-XX:+AggressiveOpts"]
+    }
+}
+
+// Task building an handy self-contained load test capsule
+task capsule(type: FatCapsule) {
+    applicationClass "com.pinterest.echo.jbender.Main"
+
+    capsuleManifest {
+        javaAgents = [configurations.quasar.iterator().next().getName()]
+        // Aggressive optimizations
+        jvmArgs = ["-server", "-XX:+TieredCompilation", "-XX:+AggressiveOpts"]
+    }
+}
+
+// Gradle JavaExec load test task
+task runLoadTest(type: JavaExec) {
+    main = "echo.jbender.Main"
+
+    classpath = sourceSets.main.runtimeClasspath
+
+    // Aggressive optimizations and Quasar agent
+    jvmArgs = ["-server", "-XX:+TieredCompilation", "-XX:+AggressiveOpts", "-javaagent:${configurations.quasar.iterator().next()}"] // Add "=vdc" to the Quasar agent to trace instrumentation
+
+    // Enable this to troubleshoot instrumentation issues
+    // systemProperties = ["co.paralleluniverse.fibers.verifyInstrumentation" : "true"]
+}
+
+// Gradle JavaExec server task
+task runServer(type: JavaExec) {
+    main = "echo.server.Main"
+
+    classpath = sourceSets.main.runtimeClasspath
+
+    // Aggressive optimizations and Quasar agent
+    jvmArgs = ["-server", "-XX:+TieredCompilation", "-XX:+AggressiveOpts", "-javaagent:${configurations.quasar.iterator().next()}"] // Add "=vdc" to the Quasar agent to trace instrumentation
+
+    // Enable this to troubleshoot instrumentation issues
+    // systemProperties = ["co.paralleluniverse.fibers.verifyInstrumentation" : "true"]
+}
