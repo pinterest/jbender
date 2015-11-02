@@ -23,16 +23,22 @@ slow down to match the server (because it cannot start more connections than req
 That JBender is a library makes it flexible and easy to extend, but means it takes longer to create
 an initial load tester. As a result, we've focused on creating easy-to-follow tutorials.
 
+## Quasar
+
+The JBender library makes heavy use of [Quasar](http://www.paralleluniverse.co/quasar/), a library from [Parallel Universe](http://www.paralleluniverse.co/) which adds lightweight threads (called "fibers") to the JVM.
+
+The tutorials, linked below, will help you get up and running with Quasar and JBender, and provide some background on how Quasar works (hint: it's very straightforward to use Quasar!). Here are some links for more information:
+
+* [Quasar's Documentation](http://docs.paralleluniverse.co/quasar/).
+* [Quasar's Github Page](https://github.com/puniverse/quasar).
+* [The Parallel Universe Blog](http://blog.paralleluniverse.co/).
+
 ## Getting Started
 
 The easiest way to get started with JBender is to use one of the tutorials:
 
 * [Thrift](https://github.com/cgordon/jbender/blob/master/doc/thrift/TUTORIAL.md)
 * [HTTP](https://github.com/cgordon/jbender/blob/master/doc/http/TUTORIAL.md)
-
-## Documentation
-
-The package documentation is available on [TODO]().
 
 ## Performance
 
@@ -131,8 +137,6 @@ The Grinder does have support for conveniently running distributed load tests.
 
 ## Copyright
 
-TODO: Review
-
 Copyright 2015 Pinterest.com
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -149,8 +153,7 @@ limitations under the License.
 
 ## Attribution
 
-TODO: Review
-
 JBender includes open source from the following sources:
 
 * Apache Thrift Libraries. Copyright 2014 Apache Software Foundation. Licensed under the Apache License v2.0 (http://www.apache.org/licenses/).
+* Quasar Libraries. Copyright 2014 Parallel Universe. Licensed under the GNU Lesser General Public License (http://www.gnu.org/licenses/lgpl.html).
