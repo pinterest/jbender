@@ -55,12 +55,7 @@ version = '0.1-SNAPSHOT'
 repositories {
     // Enable this if you want to use locally-built artifacts
     mavenLocal()
-
-    // This allows using published Quasar snapshots
-    maven {
-        url "https://oss.sonatype.org/content/repositories/snapshots"
-    }
-
+    
     mavenCentral()
 }
 
@@ -76,7 +71,7 @@ dependencies {
     compile group: "com.pinterest", name: "quasar-thrift", version: "0.1-SNAPSHOT"
 
     // Quasar API
-    compile group: "co.paralleluniverse", name: "quasar-core", version: "0.6.3-SNAPSHOT", classifier: "jdk8"
+    compile group: "co.paralleluniverse", name: "quasar-core", version: "0.7.3", classifier: "jdk8"
 
     // JBender API
     compile group: "com.pinterest", name: "jbender", version: "1.0"
@@ -86,7 +81,7 @@ dependencies {
     compile group: "org.slf4j", name: "slf4j-simple", version: "1.7.12"
 
     // Useful to point to the Quasar agent later in JVM flags (and Capsule-building task)
-    quasar group: "co.paralleluniverse", name: "quasar-core", version: "0.6.3-SNAPSHOT", classifier: "jdk8"
+    quasar group: "co.paralleluniverse", name: "quasar-core", version: "0.7.3", classifier: "jdk8"
 }
 
 // Thrift generators
@@ -195,65 +190,53 @@ Now we will create a simple service definition that just echoes the request stri
 First, create a new directory:
 
 ```
-mkdir -p src/main/java/com/pinterest/echo/jbender/server
+mkdir -p src/main/java/echo/server
 ```
 
-Then create a file named `EchoServiceImpl.java` in that directory and add these lines to it:
+Then create a file named `Main.java` in that directory and add these lines to it:
 
 ``` java
-package com.pinterest.echo.jbender.server;
+package echo.server;
 
 import co.paralleluniverse.fibers.Suspendable;
-import com.pinterest.echo.thrift.EchoRequest;
-import com.pinterest.echo.thrift.EchoResponse;
-import com.pinterest.echo.thrift.EchoService;
-import org.apache.thrift.TException;
-
-public class EchoServiceImpl implements EchoService.Iface {
-  @Override
-  @Suspendable
-  public EchoResponse echo(EchoRequest request) throws TException {
-    return new EchoResponse().setMessage(request.getMessage());
-  }
-}
-```
-
-Finally create a file named `Main.java`:
-
-``` java
-package com.pinterest.echo.jbender.server;
-
-import co.paralleluniverse.fibers.Suspendable;
-import com.pinterest.echo.thrift.EchoService;
 import com.pinterest.quasar.thrift.TFiberServer;
 import com.pinterest.quasar.thrift.TFiberServerSocket;
+import echo.thrift.EchoRequest;
+import echo.thrift.EchoResponse;
+import echo.thrift.EchoService;
+import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.transport.TFastFramedTransport;
-
 import java.net.InetSocketAddress;
 
 public class Main {
-  @Suspendable
-  public static void main(String[] args) throws Exception {
-    EchoService.Processor<EchoService.Iface> processor =
-        new EchoService.Processor<EchoService.Iface>(new EchoServiceImpl());
-    TFiberServerSocket trans = new TFiberServerSocket(new InetSocketAddress(9999));
-    TFiberServer.Args targs = new TFiberServer.Args(trans, processor)
-        .protocolFactory(new TBinaryProtocol.Factory())
-        .transportFactory(new TFastFramedTransport.Factory());
-    TFiberServer server = new TFiberServer(targs);
-    server.serve();
-    server.join();
-  }
+    static final class EchoServiceImpl implements EchoService.Iface {
+        @Override
+        @Suspendable
+        public EchoResponse echo(EchoRequest request) throws TException {
+            return new EchoResponse().setMessage(request.getMessage());
+        }
+    }
+
+    @Suspendable
+    public static void main(String[] args) throws Exception {
+        EchoService.Processor<EchoService.Iface> processor =
+            new EchoService.Processor<EchoService.Iface>(new EchoServiceImpl());
+        TFiberServerSocket trans = new TFiberServerSocket(new InetSocketAddress(9999));
+        TFiberServer.Args targs = new TFiberServer.Args(trans, processor)
+            .protocolFactory(new TBinaryProtocol.Factory())
+            .transportFactory(new TFastFramedTransport.Factory());
+        TFiberServer server = new TFiberServer(targs);
+        server.serve();
+        server.join();
+    }
 }
 ```
 
 
 ## Load Testing
 
-Let's now write a simple load tester with JBender. This section The next few sections walk through
-the various parts of the load tester. If you are in a hurry skip to the section "Final Load Tester Program"
-and just follow the instructions from there.
+Let's now write a simple load tester with JBender. The next few sections walk through the various parts of the load tester. If you are in a hurry skip to the section "Final Load Tester Program" and just follow the instructions from there.
 
 ### Intervals
 
@@ -352,36 +335,58 @@ contain.
 
 ### Final Load Tester Program
 
-Then create a file named `src/main/java/com/pinterest/echo/jbender/Main.java`:
+Then create a file named `src/main/java/echo/jbender/Main.java`:
 
 ``` java
-package com.pinterest.echo.jbender;
+package echo.jbender;
 
 import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.strands.channels.Channel;
 import co.paralleluniverse.strands.channels.Channels;
-import com.pinterest.echo.thrift.EchoRequest;
-import com.pinterest.echo.thrift.EchoResponse;
+import co.paralleluniverse.fibers.Fiber;
+import echo.thrift.EchoService;
+import echo.thrift.EchoRequest;
+import echo.thrift.EchoResponse;
 import com.pinterest.jbender.JBender;
-import com.pinterest.jbender.events.Event;
+import com.pinterest.jbender.events.TimingEvent;
 import com.pinterest.jbender.events.recording.HdrHistogramRecorder;
 import com.pinterest.jbender.events.recording.LoggingRecorder;
 import com.pinterest.jbender.executors.RequestExecutor;
 import com.pinterest.jbender.intervals.ConstantIntervalGenerator;
 import com.pinterest.jbender.intervals.IntervalGenerator;
+import com.pinterest.quasar.thrift.TFiberSocket;
+import org.apache.thrift.protocol.TBinaryProtocol;
+import org.apache.thrift.protocol.TProtocol;
+import org.apache.thrift.transport.TFastFramedTransport;
 import org.HdrHistogram.Histogram;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import java.net.InetSocketAddress;
+import java.util.concurrent.TimeUnit;
 
 import static com.pinterest.jbender.events.recording.Recorder.record;
 
 public class Main {
+  static final class EchoRequestExecutor implements RequestExecutor<EchoRequest, EchoResponse> {
+    @Override
+    public EchoResponse execute(long l, EchoRequest echoRequest) throws SuspendExecution, InterruptedException {
+      try {
+        TProtocol proto = new TBinaryProtocol(new TFastFramedTransport(TFiberSocket.open(new InetSocketAddress("localhost", 9999))));
+        EchoService.Client client = new EchoService.Client(proto);
+        return client.echo(echoRequest);
+      } catch (Exception ex) {
+        LOG.error("failed to echo", ex);
+        throw new RuntimeException(ex);
+      }
+    }
+  }
+
   public static void main(String[] args) throws SuspendExecution, InterruptedException {
     final IntervalGenerator intervalGen = new ConstantIntervalGenerator(10000000);
     final RequestExecutor<EchoRequest, EchoResponse> requestExector = new EchoRequestExecutor();
 
     final Channel<EchoRequest> requestCh = Channels.newChannel(-1);
-    final Channel<Event<EchoResponse>> eventCh = Channels.newChannel(-1);
+    final Channel<TimingEvent<EchoResponse>> eventCh = Channels.newChannel(-1);
 
     // Requests generator
     new Fiber<Void>("req-gen", () -> {
@@ -396,9 +401,9 @@ public class Main {
 
     final Histogram histogram = new Histogram(3600000000L, 3);
     // Event recording, both HistHDR and logging
-    record("recorder", eventCh, new HdrHistogramRecorder(histogram), new LoggingRecorder(LOG));
+    record(eventCh, new HdrHistogramRecorder(histogram, 1000000), new LoggingRecorder(LOG));
 
-    JBender.loadTestThroughput(intervalGen, requestCh, requestExector, eventCh);
+    JBender.loadTestThroughput(intervalGen, 0, requestCh, requestExector, eventCh);
 
     histogram.outputPercentileDistribution(System.out, 1000.0);
   }
@@ -407,45 +412,9 @@ public class Main {
 }
 ```
 
-Also create an `src/main/java/com/pinterest/echo/jbender/EchoRequestExecutor.java` file holding the executor:
-
-``` java
-package com.pinterest.echo.jbender;
-
-import co.paralleluniverse.fibers.SuspendExecution;
-import com.pinterest.echo.thrift.EchoRequest;
-import com.pinterest.echo.thrift.EchoResponse;
-import com.pinterest.echo.thrift.EchoService;
-import com.pinterest.jbender.executors.RequestExecutor;
-import com.pinterest.quasar.thrift.TFiberSocket;
-import org.apache.thrift.protocol.TBinaryProtocol;
-import org.apache.thrift.protocol.TProtocol;
-import org.apache.thrift.transport.TFastFramedTransport;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.net.InetSocketAddress;
-import java.util.concurrent.TimeUnit;
-
-public class EchoRequestExecutor implements RequestExecutor<EchoRequest, EchoResponse> {
-  @Override
-  public EchoResponse execute(long l, EchoRequest echoRequest) throws SuspendExecution, InterruptedException {
-    try {
-//      TProtocol proto = new TBinaryProtocol(new TFastFramedTransport(TFiberSocket.open(new InetSocketAddress("localhost", 9999), 10000, TimeUnit.MILLISECONDS)));
-      TProtocol proto = new TBinaryProtocol(new TFastFramedTransport(TFiberSocket.open(new InetSocketAddress("localhost", 9999))));
-      EchoService.Client client = new EchoService.Client(proto);
-      return client.echo(echoRequest);
-    } catch (Exception ex) {
-      LOG.error("failed to echo", ex);
-      throw new RuntimeException(ex);
-    }
-  }
-
-  private static final Logger LOG = LoggerFactory.getLogger(EchoRequestExecutor.class);
-}
-```
-
 ### Run Server and Load Tester
+
+The first time you use these instructions, run `gradle wrapper` to create the gradle wrapper.
 
 With `./gradlew runServer` running in one terminal window, run the load tester in
 another one with `./gradlew runLoadTest`.

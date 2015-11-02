@@ -7,13 +7,13 @@ This tutorial walks through the steps to create an HTTP load tester with JBender
 
 JBender uses [Gradle](http://gradle.org) as a build tool and we're going to use it for our sample load tester as well, so make sure you have it installed. The easiest way to get it on Mac OS X is probably to install [HomeBrew](http://brew.sh/) and then `brew install gradle`, while on Linux there's [LinuxBrew](https://github.com/Homebrew/linuxbrew). Your specific Linux distribution could offer native Gradle packages but they tend to lag behind the most recent version, so it's probably better to brew anyway.
 
-We load test a ready-made server available as the [Comsat Gradle template](https://github.com/puniverse/comsat-gradle-template), so you can just `git clone` it and then run it in a separate terminal window with `./gradlew -Penv=dropwizard run` from the project directory.
+We load test a ready-made server available as the [Comsat Gradle template](https://github.com/puniverse/comsat-gradle-template), so you can just `git clone` it and then run it in a separate terminal window with `gradle wrapper` followed by `./gradlew -Penv=dropwizard run` from the project directory.
 
 Writing a JBender HTTP load test involves using JBender's `FiberApacheHttpClientRequestExecutor`, which is based on [Comsat HTTP client](http://docs.paralleluniverse.co/comsat/#http-clients).
 
 ### Creating the load test Gradle project
 
-In your usual sources work root create a `jbender-http-tutorial` directory and the following `build.gradle` file in it:
+In your usual sources work root create a `jbender-http-tutorial` directory and view the following `build.gradle` file in it (you won't need to add this, it is already there):
 
 ``` groovy
 plugins {
@@ -93,11 +93,18 @@ task runLoadTest(type: JavaExec) {
 }
 ```
 
+This uses [Capsule](https://github.com/puniverse/capsule) to package the load tester, and provides a convenience task named `runLoadTest` that makes it easy to run the load test with gradle (in development). This is an example of what a production build file would look like for a load tester, and we highly recommend the use of Capsule!
+
 ## Load Testing
 
-Let's now write a simple load tester with JBender. This section The next few sections walk through
-the various parts of the load tester. If you are in a hurry skip to the section "Final Load Tester Program"
-and just follow the instructions from there.
+Let's now write a simple load tester with JBender. The next few sections walk through the various parts of the load tester. If you are in a hurry skip to the section "Final Load Tester Program" and just follow the instructions from there. The sample code you copied in the first step already has all this code, so these sections just describe what that code does, and why.
+
+JBender has a very simple loop in which it does the following:
+
+1. Generate an interval (in nanoseconds) and sleep for that amount of time (you have control over the length of these intervals).
+2. Fetch the next request from a channel of requests (created by you).
+3. Spawn a lightweight thread (fiber) to send the request and wait for the response (and then generate timing information).
+4. Repeat until there are no more requests to send.
 
 ### Intervals
 
@@ -139,6 +146,8 @@ new Fiber<Void>("message-producer", () -> {
 }).start();
 ```
 
+Note that this loop will send 10k requests and then close the channel. Closing the channel notifies the load tester that there will be no more requests, so it can finish waiting for pending requests and then shut itself down. If you fail to close the channel the load tester will wait for a next request forever.
+
 ### Request Executor
 
 The next thing we need is a request executor, which takes the requests generated above and sends
@@ -161,19 +170,15 @@ This validates that the response has actually been produced ans has a HTTP 200 s
 
 ### Recorder
 
-The last thing we need is a channel that will output events as the load tester runs. This will let
-us listen to the load testers progress and record stats. We want this channel to be buffered so that
-we can run somewhat independently of the load test without slowing it down:
+The last thing we need is a channel that will output `TimingEvent` objects as the load tester runs. This will let us listen to the load testers progress and record stats. We want this channel to be buffered so that we can run somewhat independently of the load test without slowing it down:
 
 ``` java
-final Channel<Event<CloseableHttpResponse>> eventCh = Channels.newChannel(10000);
+final Channel<TimingEvent<CloseableHttpResponse>> eventCh = Channels.newChannel(10000);
 ```
 
-The `JBender.loadTestThroughput` function will send there events for things like how long it waits
-between requests, how much overage it is currently experiencing, and when requests start and end,
-how long they took and whether or not they had errors. That raw event stream makes it possible to
-analyze the results of a load test. JBender has a couple simple "recorders" that provide basic
-functionality for result analysis:
+The `TimingEvent` object contains fields that include the interval time between requests, the duration of the request (how long it took to get a response), whether it was an error or a success, how much "overage" time it is experiencing and a few other things (including a field that can be filled in by the request executor).
+
+JBender has a few simple "recorders" that make it easy to do basic things like logging events and generating histograms:
 
 * `LoggingRecorder` creates a recorder that takes a `Logger` and outputs each event.
 * `NewHistogramRecorder` records request latencies on a [`org.HdrHistogram.Histogram`](https://github.com/HdrHistogram/HdrHistogram).
@@ -278,6 +283,6 @@ public class LoadTest {
 ### Run Server and Load Tester
 
 With the `comsat-gradle-template` server running in one terminal window, run the load tester in
-another one from the `jbender-http-tutorial` project directory with `./gradlew runLoadTest`.
+another one from the `jbender-http-tutorial` project directory with `gradle wrapper` (only the first time) and then `./gradlew runLoadTest`.
 
 The output of the load test will be the percentile distribution from the histogram.
