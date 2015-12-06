@@ -37,8 +37,8 @@ The tutorials, linked below, will help you get up and running with Quasar and JB
 
 The easiest way to get started with JBender is to use one of the tutorials:
 
-* [Thrift](https://github.com/cgordon/jbender/blob/master/doc/thrift/TUTORIAL.md)
-* [HTTP](https://github.com/cgordon/jbender/blob/master/doc/http/TUTORIAL.md)
+* [Thrift](https://github.com/pinterest/jbender/blob/master/doc/thrift/TUTORIAL.md)
+* [HTTP](https://github.com/pinterest/jbender/blob/master/doc/http/TUTORIAL.md)
 
 ## Performance
 
