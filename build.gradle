@@ -10,13 +10,15 @@ sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 group = 'com.pinterest'
-version = '1.0'
+version = '1.0.1-SNAPSHOT'
 
-ext.jmhVer      = '1.9.2'
-ext.hdrHistVer  = '2.1.4'
+ext.jmhVer      = '1.9.3'
+ext.hdrHistVer  = '2.1.7'
 ext.quasarVer   = '0.7.3'
-ext.httpCoreVer = '4.3.3'
+ext.comsatVer   = '0.5.0'
+ext.httpCoreVer = '4.4.1'
 ext.slf4jVer    = '1.7.12'
+ext.junitVer    = '4.12'
 
 repositories {
     // mavenLocal()
@@ -40,9 +42,9 @@ configurations.all {
 }
 
 dependencies {
-    testCompile group: 'junit', name: 'junit', version: '4.12'
+    testCompile group: 'junit', name: 'junit', version: "$junitVer"
     compile group: 'co.paralleluniverse', name: 'quasar-core', version: "$quasarVer", classifier: 'jdk8'
-    compile group: 'co.paralleluniverse', name: 'comsat-httpclient', version: '0.3.0'
+    compile group: 'co.paralleluniverse', name: 'comsat-httpclient', version: "$comsatVer"
     compile group: 'org.hdrhistogram', name: 'HdrHistogram', version: "$hdrHistVer"
     compile group: 'org.slf4j', name: 'slf4j-api', version: "$slf4jVer"
     // compile group: 'org.slf4j', name: 'slf4j-simple', version: "$slf4jVer"
