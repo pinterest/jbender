@@ -73,6 +73,7 @@ net.core.netdev_max_backlog = 100000
 net.ipv4.tcp_max_syn_backlog = 100000
 net.ipv4.tcp_max_tw_buckets = 2000000
 net.ipv4.tcp_tw_reuse = 1
+net.ipv4.tcp_tw_recycle = 1
 net.ipv4.tcp_fin_timeout = 10
 
 # Disable TCP slow start on idle connections
@@ -80,7 +81,7 @@ net.ipv4.tcp_slow_start_after_idle = 0
 
 # From https://people.redhat.com/alikins/system_tuning.html
 net.ipv4.tcp_sack = 0
-net.ipv4.tcp_timestamps = 0
+net.ipv4.tcp_timestamps = 1
 ```
 
 This is a slightly modified version of advice taken from this source:
