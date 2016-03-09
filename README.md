@@ -53,7 +53,7 @@ recommended to restart your host at this point to make sure these take effect).
 fs.file-max = 100000
 
 # Increase ephermeral IP ports
-net.ipv4.ip_local_port_range = 10000 65000
+net.ipv4.ip_local_port_range = 1024 65000
 
 # Increase Linux autotuning TCP buffer limits
 # Set max to 16MB for 1GE and 32M (33554432) or 54M (56623104) for 10GE
@@ -69,14 +69,18 @@ net.ipv4.tcp_wmem = 4096 65536 16777216
 # Make room for more TIME_WAIT sockets due to more clients,
 # and allow them to be reused if we run out of sockets
 # Also increase the max packet backlog
-net.core.netdev_max_backlog = 50000
-net.ipv4.tcp_max_syn_backlog = 30000
+net.core.netdev_max_backlog = 100000
+net.ipv4.tcp_max_syn_backlog = 100000
 net.ipv4.tcp_max_tw_buckets = 2000000
 net.ipv4.tcp_tw_reuse = 1
 net.ipv4.tcp_fin_timeout = 10
 
 # Disable TCP slow start on idle connections
 net.ipv4.tcp_slow_start_after_idle = 0
+
+# From https://people.redhat.com/alikins/system_tuning.html
+net.ipv4.tcp_sack = 0
+net.ipv4.tcp_timestamps = 0
 ```
 
 This is a slightly modified version of advice taken from this source:
