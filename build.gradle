@@ -12,20 +12,20 @@ targetCompatibility = 1.8
 group = 'com.pinterest'
 version = '1.0.1-SNAPSHOT'
 
-ext.jmhVer      = '1.9.3'
-ext.hdrHistVer  = '2.1.7'
-ext.quasarVer   = '0.7.3'
-ext.comsatVer   = '0.5.0'
-ext.httpCoreVer = '4.4.1'
-ext.slf4jVer    = '1.7.12'
+ext.jmhVer      = '1.11.3'
+ext.hdrHistVer  = '2.1.8'
+ext.quasarVer   = '0.7.4'
+ext.comsatVer   = '0.7.0'
+ext.httpCoreVer = '4.4.4'
+ext.slf4jVer    = '1.7.13'
 ext.junitVer    = '4.12'
 
 repositories {
     // mavenLocal()
     mavenCentral()
-    //maven {
-        //url "https://oss.sonatype.org/content/repositories/snapshots"
-    //}
+    maven {
+        url "https://oss.sonatype.org/content/repositories/snapshots"
+    }
 }
 
 configurations {
