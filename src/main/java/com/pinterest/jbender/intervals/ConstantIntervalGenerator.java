@@ -13,6 +13,8 @@ limitations under the License.
 package com.pinterest.jbender.intervals;
 
 public class ConstantIntervalGenerator implements IntervalGenerator {
+  private final long interval;
+
   public ConstantIntervalGenerator(long interval) {
     this.interval = interval;
   }
@@ -21,6 +23,4 @@ public class ConstantIntervalGenerator implements IntervalGenerator {
   public long nextInterval(long nanoTimeSinceStart) {
     return interval;
   }
-
-  private final long interval;
 }
