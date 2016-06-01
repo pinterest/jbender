@@ -1,6 +1,8 @@
 JBender
 =======
 
+[![Build Status](https://travis-ci.org/pinterest/jbender.svg)](https://travis-ci.org/pinterest/jbender)
+
 JBender makes it easy to build load testers for services using protocols like HTTP and Thrift (and
 many others). JBender provides a library of flexible, easy-to-use primitives that can be combined
 (with plain Java code) to build high performance load testers customized to any use case, and that
