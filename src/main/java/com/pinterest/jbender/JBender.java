@@ -32,6 +32,8 @@ import java.util.concurrent.TimeUnit;
  * JBender has static methods for running load tests by throughput or concurrency.
  */
 public final class JBender {
+  private static final Logger LOG = LoggerFactory.getLogger(JBender.class);
+
   /**
    * Run a load test with the given throughput, using as many fibers as necessary.
    *
@@ -418,6 +420,4 @@ public final class JBender {
           new TimingEvent<>(curWaitNanos, outcome.execTime, curOverageNanos, outcome.exception));
     }
   }
-
-  private static final Logger LOG = LoggerFactory.getLogger(JBender.class);
 }

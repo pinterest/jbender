@@ -20,6 +20,9 @@ import co.paralleluniverse.strands.Strand;
  * Simplified phaser supporting up to {@code Long.MAX_VALUE} fibers.
  */
 public class WaitGroup {
+  private volatile Strand waiter;
+  private AtomicLong running;
+
   public WaitGroup() {
     running = new AtomicLong();
     waiter = null;
@@ -42,7 +45,4 @@ public class WaitGroup {
       Strand.park();
     }
   }
-
-  private volatile Strand waiter;
-  private AtomicLong running;
 }
