@@ -37,7 +37,6 @@ import static com.pinterest.jbender.events.recording.Recorder.record;
  * Sample HTTP benchmark against {@url https://github.com/puniverse/comsat-gradle-template}
  */
 public class JBenderHttpBenchmark {
-  private static final Logger LOG = LoggerFactory.getLogger(JBenderHttpBenchmark.class);
 
   @Benchmark
   public Histogram loadtestHttpThroughput() throws SuspendExecution, InterruptedException, ExecutionException, IOException {
