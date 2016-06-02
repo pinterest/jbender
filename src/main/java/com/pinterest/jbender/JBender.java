@@ -34,6 +34,8 @@ import java.util.concurrent.TimeUnit;
 public final class JBender {
   private static final Logger LOG = LoggerFactory.getLogger(JBender.class);
 
+  private JBender() {}
+
   /**
    * Run a load test with the given throughput, using as many fibers as necessary.
    *
