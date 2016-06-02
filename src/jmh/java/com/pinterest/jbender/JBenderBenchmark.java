@@ -32,7 +32,6 @@ import java.util.concurrent.ExecutionException;
 import static com.pinterest.jbender.events.recording.Recorder.record;
 
 public class JBenderBenchmark {
-  private static final Logger LOG = LoggerFactory.getLogger(JBenderBenchmark.class);
 
   // @Benchmark
   public Histogram loadtestThroughput() throws SuspendExecution, InterruptedException, ExecutionException {

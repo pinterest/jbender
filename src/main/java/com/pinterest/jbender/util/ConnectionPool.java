@@ -50,7 +50,6 @@ public class ConnectionPool<T extends Closeable> {
     T get() throws IOException, SuspendExecution;
   }
 
-  private static final Logger LOG = LoggerFactory.getLogger(ConnectionPool.class);
   private final SuspendableSupplierWithIO<T> supplier;
   private final Channel<T> pool;
 
