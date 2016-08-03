@@ -12,12 +12,12 @@ targetCompatibility = 1.8
 group = 'com.pinterest'
 version = '1.0.1-SNAPSHOT'
 
-ext.jmhVer      = '1.11.3'
-ext.hdrHistVer  = '2.1.8'
-ext.quasarVer   = '0.7.4'
+ext.jmhVer      = '1.13'
+ext.hdrHistVer  = '2.1.9'
+ext.quasarVer   = '0.7.5'
 ext.comsatVer   = '0.7.0'
-ext.httpCoreVer = '4.4.4'
-ext.slf4jVer    = '1.7.13'
+ext.httpCoreVer = '4.4.5'
+ext.slf4jVer    = '1.7.21'
 ext.junitVer    = '4.12'
 
 repositories {
